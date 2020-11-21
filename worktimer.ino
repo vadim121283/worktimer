@@ -15,11 +15,10 @@ int timeInt = 0;
 int tm = 0;
 boolean startTimer = false;
 uint8_t minusSeg[] = {0x40, 0x40, 0x40, 0x40};
-boolean dispBr = true;
+boolean blocked = false;
 // 8 work hours countdown timer
-int thours = 7;
-int tminutes = 59;
-boolean runCTimer = true;
+int thours = 0;
+int tminutes = 0;
 
 //
 //      A
@@ -76,7 +75,7 @@ int getTimeInt(int hr, int mi, boolean cd)
   {
     timeString = h + m;
     tInt = timeString.toInt();
-    tInt = tInt * (-1);
+    //tInt = tInt * (-1);
   }
   else
   {
@@ -121,6 +120,8 @@ void btnTick()
     switch (clicks)
     {
     case 1:
+      if (blocked)
+        break;
       if (startTimer)
       {
         startTimer = false;
@@ -129,41 +130,33 @@ void btnTick()
       else
       {
         startTimer = true;
-        if (dispBr)
-        {
-          digitalWrite(2, LOW);
-        }
+        digitalWrite(2, LOW);
       }
       break;
     case 2:
-      // show countdown timer
+      // show 2 timer
+      if (blocked)
+        break;
       showCountdown();
       break;
     case 3:
-      // reset countdown timer
-      thours = 7;
-      tminutes = 59;
-      runCTimer = true;
+      // reset 2 timer
+      if (blocked)
+        break;
+      thours = 0;
+      tminutes = 0;
       showCountdown();
       break;
     case 4:
-      // low brightnes
-      dispBr = !dispBr;
-      if (dispBr && startTimer)
-      {
-        digitalWrite(2, LOW);
-      }
-      else
-      {
-        digitalWrite(2, HIGH);
-      }
-      display.setBrightness(dispBr ? 7 : 1);
       break;
     case 5:
+      // low brightnes and blocked
+      blocked = !blocked;
+      display.setBrightness(blocked ? 1 : 7);
       break;
     }
   }
-  if (button.isHolded())
+  if (button.isHolded() && !blocked)
   {
     // reset
     startTimer = false;
@@ -194,6 +187,7 @@ void tikSec()
     {
       seconds = 0;
       minutes++;
+      tminutes++;
       if (minutes >= 60)
       {
         minutes = 0;
@@ -203,20 +197,13 @@ void tikSec()
           hours = 0;
         }
       }
-      if (runCTimer)
+      if (tminutes >= 60)
       {
-        tminutes--;
-        if (tminutes <= 0 && thours <= 0)
+        tminutes = 0;
+        thours++;
+        if (thours >= 99)
         {
-          runCTimer = false;
-        }
-        else
-        {
-          if (tminutes < 0)
-          {
-            tminutes = 59;
-            thours--;
-          }
+          thours = 0;
         }
       }
     }
